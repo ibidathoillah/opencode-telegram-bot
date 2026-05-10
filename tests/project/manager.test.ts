@@ -71,7 +71,7 @@ describe("project/manager", () => {
     await expect(getProjects()).rejects.toThrow("boom");
   });
 
-  it("hides linked git worktrees and keeps primary worktree", async () => {
+  it("includes linked git worktrees in the projects list", async () => {
     tempRoot = await mkdtemp(path.join(os.tmpdir(), "opencode-projects-"));
 
     const mainWorktree = path.join(tempRoot, "repo-main");
@@ -96,7 +96,10 @@ describe("project/manager", () => {
 
     const projects = await getProjects();
 
-    expect(projects).toEqual([{ id: "main", worktree: mainWorktree, name: "Main" }]);
+    expect(projects).toEqual([
+      { id: "main", worktree: mainWorktree, name: "Main" },
+      { id: "feature", worktree: linkedWorktree, name: "Feature" },
+    ]);
   });
 
   describe("getProjectByWorktree", () => {

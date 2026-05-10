@@ -120,7 +120,7 @@ function isWindowsWorktreePath(worktree: string): boolean {
 }
 
 export async function getProjects(): Promise<ProjectInfo[]> {
-  const projects = await getResolvedProjects();
+  const projects = await getResolvedProjects({ includeLinkedWorktrees: true });
   return projects.map(({ id, worktree, name }) => ({ id, worktree, name }));
 }
 
