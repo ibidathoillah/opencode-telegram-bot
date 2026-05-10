@@ -51,11 +51,23 @@ export async function scanDirectory(
     const subdirs: DirectoryEntry[] = [];
 
     for (const entry of entries) {
-      if (entry.isDirectory() && !entry.name.startsWith(".")) {
+      if (entry.name.startsWith(".")) continue;
+
+      if (entry.isDirectory()) {
         subdirs.push({
           name: entry.name,
           fullPath: path.join(dirPath, entry.name),
         });
+      } else if (entry.isSymbolicLink()) {
+        const fullPath = path.join(dirPath, entry.name);
+        try {
+          const targetStat = await fs.stat(fullPath);
+          if (targetStat.isDirectory()) {
+            subdirs.push({ name: entry.name, fullPath });
+          }
+        } catch {
+          // broken symlink, skip
+        }
       }
     }
 

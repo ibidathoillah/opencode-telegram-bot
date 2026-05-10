@@ -241,19 +241,36 @@ async function scanDirectory(
     }
 
     const dirEntries = await fs.readdir(dirPath, { withFileTypes: true });
-    const entries: LsEntry[] = dirEntries
-      .map((entry): LsEntry => ({
+    const entries: LsEntry[] = [];
+
+    for (const entry of dirEntries) {
+      let type: "directory" | "file";
+      if (entry.isDirectory()) {
+        type = "directory";
+      } else if (entry.isSymbolicLink()) {
+        try {
+          const targetStat = await fs.stat(joinPath(dirPath, entry.name));
+          type = targetStat.isDirectory() ? "directory" : "file";
+        } catch {
+          type = "file";
+        }
+      } else {
+        type = "file";
+      }
+      entries.push({
         name: entry.name,
         fullPath: joinPath(dirPath, entry.name),
-        type: entry.isDirectory() ? "directory" : "file",
-      }))
-      .sort((left, right) => {
-        if (left.type !== right.type) {
-          return left.type === "directory" ? -1 : 1;
-        }
-
-        return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
+        type,
       });
+    }
+
+    entries.sort((left, right) => {
+      if (left.type !== right.type) {
+        return left.type === "directory" ? -1 : 1;
+      }
+
+      return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
+    });
 
     const totalPages = Math.max(1, Math.ceil(entries.length / MAX_ENTRIES_PER_PAGE));
     const safePage = Math.max(0, Math.min(page, totalPages - 1));

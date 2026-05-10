@@ -92,8 +92,8 @@ describe("bot/commands/ls", () => {
     clearSessionDirectories();
     clearLsPathIndex();
     mocked.readdirMock.mockReset().mockResolvedValue([
-      { name: "docs", isDirectory: () => true },
-      { name: "README.md", isDirectory: () => false },
+      { name: "docs", isDirectory: () => true, isSymbolicLink: () => false },
+      { name: "README.md", isDirectory: () => false, isSymbolicLink: () => false },
     ]);
     mocked.statMock.mockReset().mockResolvedValue({
       isFile: () => true,
@@ -209,10 +209,10 @@ describe("bot/commands/ls", () => {
 
   it("lists directories before files", async () => {
     mocked.readdirMock.mockResolvedValue([
-      { name: "z-last-dir", isDirectory: () => true },
-      { name: "a-file.txt", isDirectory: () => false },
-      { name: "b-dir", isDirectory: () => true },
-      { name: "c-file.txt", isDirectory: () => false },
+      { name: "z-last-dir", isDirectory: () => true, isSymbolicLink: () => false },
+      { name: "a-file.txt", isDirectory: () => false, isSymbolicLink: () => false },
+      { name: "b-dir", isDirectory: () => true, isSymbolicLink: () => false },
+      { name: "c-file.txt", isDirectory: () => false, isSymbolicLink: () => false },
     ]);
 
     const ctx = createCommandContext();
@@ -231,7 +231,7 @@ describe("bot/commands/ls", () => {
     const keyboard = (commandCtx.reply as ReturnType<typeof vi.fn>).mock.calls[0]?.[1]?.reply_markup;
     const callbackData = keyboard.inline_keyboard[0][0].callback_data as string;
 
-    mocked.readdirMock.mockResolvedValue([{ name: "nested.txt", isDirectory: () => false }]);
+    mocked.readdirMock.mockResolvedValue([{ name: "nested.txt", isDirectory: () => false, isSymbolicLink: () => false }]);
 
     const callbackCtx = createCallbackContext(callbackData);
     const handled = await handleLsCallback(callbackCtx);
@@ -292,6 +292,7 @@ describe("bot/commands/ls", () => {
       Array.from({ length: 9 }, (_, index) => ({
         name: `dir-${index + 1}`,
         isDirectory: () => true,
+        isSymbolicLink: () => false,
       })),
     );
 
@@ -309,6 +310,7 @@ describe("bot/commands/ls", () => {
       Array.from({ length: 9 }, (_, index) => ({
         name: `dir-${index + 1}`,
         isDirectory: () => true,
+        isSymbolicLink: () => false,
       })),
     );
 
@@ -390,7 +392,7 @@ describe("bot/commands/ls", () => {
   });
 
   it("shows a back button for navigating to parent directory", async () => {
-    mocked.readdirMock.mockResolvedValue([{ name: "nested.txt", isDirectory: () => false }]);
+    mocked.readdirMock.mockResolvedValue([{ name: "nested.txt", isDirectory: () => false, isSymbolicLink: () => false }]);
 
     const ctx = {
       chat: { id: 123 },
@@ -411,7 +413,7 @@ describe("bot/commands/ls", () => {
   });
 
   it("does not show a back button at the project root", async () => {
-    mocked.readdirMock.mockResolvedValue([{ name: "README.md", isDirectory: () => false }]);
+    mocked.readdirMock.mockResolvedValue([{ name: "README.md", isDirectory: () => false, isSymbolicLink: () => false }]);
 
     const ctx = createCommandContext();
     await lsCommand(ctx as never);
